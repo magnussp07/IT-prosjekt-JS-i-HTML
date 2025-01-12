@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong</title>
+    <link rel="icon" type="image/x-icon" href="/bilder/icon.ico">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@600&display=swap');
+
+        body{
+            margin:0;
+            background-color: black;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            
+        }
+
+        #bane{
+            position: relative;
+            background-image: url(bilder/bane2.jpg);
+            width: 610px;
+            height: 470px;
+            top:100px;
+            filter: drop-shadow(0 0 20px purple);
+            margin: auto;
+            
+
+        }
+        
+        #ball{
+            position: absolute;
+            width: 20px;
+            filter:  drop-shadow(0 0 10px purple);
+        }
+
+        #spiller{
+            position:absolute;
+            width: 20px;
+            height: 100px;
+            filter: invert(100%) drop-shadow(0 0 10px rgb(83, 249, 0) ) ;
+            
+            
+        }
+
+        #ai{    
+            position:absolute;
+            width: 20px;
+            height: 100px;
+            filter: invert(100%) drop-shadow(0 0 10px red);
+        }
+
+        #score{
+            color:white;
+            position: absolute;
+            font-family: "Oswald", serif;
+        }
+    </style>
+</head>
+<body >
+    <div id="bane" >
+        <img id="spiller" src="bilder/spiller.bmp" alt="">
+        <img id="ai" src="bilder/spiller.bmp" alt="">
+        <img id="ball" src="bilder/ball2.png" alt="">
+        
+    </div>
+
+    <h1 id="score">0--0</h1>
+    
+    <script>
+        const ball = document.getElementById("ball")
+        const bane = document.getElementById("bane")
+        const spiller = document.getElementById("spiller")
+        const ai = document.getElementById("ai")
+        const text = document.getElementById("score")
+
+        const steg = 1.2
+
+        let spiller_y = bane.offsetHeight/2 - spiller.offsetHeight/2 /* setter spilleren i midten */
+        const spiller_vy = 1.3
+
+        let ai_y = bane.offsetHeight/2
+        let ai_x = bane.offsetWidth - ai.offsetWidth
+        ai.style.left = ai_x + "px"
+        
+        
+        let x = bane.offsetWidth/1.3
+        let y = (bane.offsetHeight-50)*Math.random()
+
+        let vx = -3        
+        let vy = (Math.random()*3)-1.5 /* setter vy til et tall mellom -1.5 og 1.5 */
+
+
+
+        let up = false
+        let down = false
+
+        let poeng = 0
+        let ai_poeng = 0
+
+        
+
+
+        function reset(){/* velger tilfeldig hvem som starter med å slå ballen, og velger tilfeldig vinkel og høyde på ballen */
+            spiller_y = bane.offsetHeight/2 - spiller.offsetHeight/2
+            ai_y = bane.offsetHeight/2 - spiller.offsetHeight/2
+            y = (bane.offsetHeight-50)*Math.random()
+            vy = (Math.random()*3)-1.5
+
+            if(Math.random() < 0.5){
+                x =  bane.offsetWidth/1.3
+                vx = -3
+            }else{
+                x =  bane.offsetWidth/4
+                vx = 3                
+            }
+            
+        }
+
+        function nytt_poeng_ai(){
+            ai_poeng++
+            
+            text.innerHTML = poeng + "--" + ai_poeng
+        }
+        function nytt_poeng_spiller(){
+            poeng++
+            
+            text.innerHTML = poeng + "--" + ai_poeng
+        }
+
+        function snuX(hvem){ /* snur x og "dytter" ballen ut av den som slår den tilbake for å unngå at ballen "hekter" seg */
+            vx = -vx
+            if (hvem == spiller){
+                x = spiller.offsetWidth
+            }else if (hvem == ai){
+                x = x = bane.offsetWidth - ai.offsetWidth - ball.offsetWidth
+            }
+        }
+
+        function snuY(){
+            vy = -vy
+        }
+
+        function ai_til_ball(){ /* flytter ai mot ballen */
+            if (y+ball.offsetHeight/2 >= ai_y + ai.offsetHeight/2 && ai_y + ai.offsetHeight + steg < bane.offsetHeight){/* sjekker om ai er over ballen og ikke under banen */
+                    ai_y += steg
+                    
+                }
+                else if (y+ball.offsetHeight/2 < ai_y + ai.offsetHeight/2 && ai_y > steg){/* sjekker om ai er under ballen og ikke over banen */
+                    ai_y -= steg
+                }
+        }
+
+        function ai_tilbake(){ /* flytter ai til midten når ballen er langt unna */
+            if(ai_y + ai.offsetHeight/2 < bane.offsetHeight/2){ 
+                    ai_y += steg
+
+            }else/*  if(ai_y + ai.offsetHeight/2 > bane.offsetHeight/2) */{  
+                ai_y -= steg
+            }
+        }
+
+
+        
+        function beveg(){/* denne kalles hele tiden */
+            
+            x += vx 
+            y += vy
+
+            ai.style.top = ai_y  + "px"
+            ball.style.top = y + "px"
+            ball.style.left = x + "px"
+            spiller.style.top = spiller_y + "px"
+
+            if (Math.abs(vy) < 1){ /* vy må være minst +-1 så ballen får større vinkel, dersom vinkel er for lav, finner vi en ny en  */
+                reset()
+            }
+
+            if(x > bane.offsetWidth/4 ){ /* ai bevegelse*/
+                ai_til_ball()
+            }else{
+                ai_tilbake()
+            } 
+ 
+
+            
+            /* kollisjon ball høyre vegg */
+            if (x > (bane.offsetWidth - ball.offsetWidth)){ 
+                reset()
+                nytt_poeng_spiller()
+
+                
+            }
+            
+            /* kollisjon ball venstre vegg */
+            if (x < 0){
+                reset()
+                nytt_poeng_ai()
+            }
+
+            /* kollisjon ball spiller*/
+            if (x <= spiller.offsetWidth && y >=  (spiller_y - ball.offsetHeight) && y <= (spiller.offsetHeight + spiller_y)){
+                snuX(spiller)
+                
+            }
+
+            
+            
+            /* kollisjon ball ai*/
+            if ((x + ball.offsetWidth) >= ai_x && y  >=  (ai_y - ball.offsetHeight) && (y+ball.offsetHeight) <= (ai.offsetHeight + ai_y)){
+                snuX(ai)
+                
+            }
+
+            /* kollisjon ball  gulv/tak*/
+            if (y > (bane.offsetHeight - ball.offsetHeight) || y <= 0){ 
+                snuY()
+                
+            }
+            
+
+            /* kollisjon spiller tak */
+            if(up == true && (spiller_y > 0)){
+                spiller_y -= spiller_vy
+                
+            }
+
+            /* kollisjon spiller gulv */
+            if(down == true && (spiller_y < (bane.offsetHeight - spiller.offsetHeight))){
+                spiller_y += spiller_vy
+            }
+
+            
+        }
+
+        document.addEventListener("keydown", function(event){
+                if (event.key == "s"){
+                    up = false
+                    down = true
+                }
+                if (event.key == "w"){
+                    up = true
+                    down = false
+                }
+            }
+        )
+
+        
+        
+        setInterval(beveg, 5)
+
+    </script>
+</body>
+</html>
